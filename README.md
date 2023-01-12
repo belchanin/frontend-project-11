@@ -3,3 +3,6 @@
 
 ### Vercel link
 https://frontend-project-11-three-virid.vercel.app/
+
+### CodeClimate
+<a href="https://codeclimate.com/github/belchanin/frontend-project-11/maintainability"><img src="https://api.codeclimate.com/v1/badges/2b753620fd24b5a7db1e/maintainability" /></a>
