@@ -10,13 +10,19 @@ const app = () => {
     lng: 'ru',
     debug: true,
     resources: {
-      ru: {},
+      ru: {
+        translation: {
+          errors: {
+            isNotValid: 'Ссылка должна быть валидным URL',
+          },
+        },
+      },
     },
   });
 
   yup.setLocale({
     string: {
-      url: 'Ссылка должна быть валидным URL',
+      url: i18next.t('errors.isNotValid'),
     },
   });
 
