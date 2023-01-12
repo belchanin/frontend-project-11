@@ -1,10 +1,25 @@
 import './styles.scss';
 import onChange from 'on-change';
 import * as yup from 'yup';
+import i18next from 'i18next';
 
 import render from './view/watchers';
 
 const app = () => {
+  i18next.init({
+    lng: 'ru',
+    debug: true,
+    resources: {
+      ru: {},
+    },
+  });
+
+  yup.setLocale({
+    string: {
+      url: 'Ссылка должна быть валидным URL',
+    },
+  });
+
   const elements = {
     form: document.querySelector('.rss-form'),
     input: document.getElementById('url-input'),
