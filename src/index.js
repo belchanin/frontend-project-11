@@ -14,7 +14,10 @@ const app = () => {
         translation: {
           errors: {
             isNotValid: 'Ссылка должна быть валидным URL',
+            noData: 'Ресурс не содержит валидный RSS',
           },
+
+          success: 'RSS успешно загружен',
         },
       },
     },
@@ -30,6 +33,7 @@ const app = () => {
     form: document.querySelector('.rss-form'),
     input: document.getElementById('url-input'),
     formError: document.querySelector('.feedback'),
+    posts: document.querySelector('.posts'),
   };
 
   const initialState = {
@@ -37,9 +41,44 @@ const app = () => {
       valid: true,
       errors: '',
     },
+    isLoaded: false,
+    posts: [],
   };
 
   const watchedState = onChange(initialState, render(initialState, elements));
+
+  const parseData = (data) => {
+    const parser = new DOMParser();
+    const result = parser.parseFromString(data, 'text/html');
+    const items = result.querySelectorAll('item');
+
+    if (!items.length) {
+      watchedState.form.errors = i18next.t('errors.noData');
+      return;
+    }
+
+    const newData = [...items].map((item) => {
+      const title = item.querySelector('title').textContent;
+      const link = item.querySelector('link').nextSibling.textContent;
+      const description = item.querySelector('description').textContent;
+
+      return { title, link, description };
+    });
+
+    watchedState.posts = [...watchedState.posts, ...newData];
+    watchedState.isLoaded = true;
+  };
+
+  const getOrigins = (link) => {
+    fetch(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        }
+        throw new Error('Network response was not ok.');
+      })
+      .then((data) => parseData(data.contents));
+  };
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -49,11 +88,17 @@ const app = () => {
       link: yup.string().required().url(),
     });
 
+    const link = input.value;
+
     schema.validate({
-      link: input.value,
+      link,
     }).then(() => {
       watchedState.form.valid = true;
       watchedState.form.errors = '';
+      watchedState.isLoaded = false;
+
+      getOrigins(link);
+
       elements.input.value = '';
       elements.input.focus();
     }).catch((err) => {
