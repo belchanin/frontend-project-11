@@ -2,6 +2,7 @@ import './styles.scss';
 import onChange from 'on-change';
 import * as yup from 'yup';
 import i18next from 'i18next';
+import _ from 'lodash';
 
 import render from './view/watchers';
 
@@ -54,19 +55,23 @@ const app = () => {
 
     if (!items.length) {
       watchedState.form.errors = i18next.t('errors.noData');
-      return;
+      return {
+        posts: [],
+      };
     }
 
-    const newData = [...items].map((item) => {
-      const title = item.querySelector('title').textContent;
-      const link = item.querySelector('link').nextSibling.textContent;
-      const description = item.querySelector('description').textContent;
+    const newData = [...items]
+      .map((item) => {
+        const title = item.querySelector('title').textContent;
+        const link = item.querySelector('link').nextSibling.textContent;
+        const description = item.querySelector('description').textContent;
 
-      return { title, link, description };
-    });
+        return { title, link, description };
+      });
 
-    watchedState.posts = [...watchedState.posts, ...newData];
-    watchedState.isLoaded = true;
+    return {
+      posts: newData,
+    };
   };
 
   const getOrigins = (link) => {
@@ -77,7 +82,18 @@ const app = () => {
         }
         throw new Error('Network response was not ok.');
       })
-      .then((data) => parseData(data.contents));
+      .then((data) => {
+        const { posts } = initialState;
+        const { posts: loadedPosts } = parseData(data.contents);
+
+        const diff = _.differenceBy(loadedPosts, posts, 'link');
+
+        if (diff.length !== 0) {
+          const postsToAdd = diff.map((post) => ({ ...post, id: _.uniqueId() }));
+          watchedState.posts = [...postsToAdd, ...posts];
+        }
+      })
+      .finally(() => setTimeout(() => getOrigins(link), 5000));
   };
 
   elements.form.addEventListener('submit', (e) => {
